@@ -1,6 +1,6 @@
 module go.portalnesia.com/nullable
 
-go 1.21.0
+go 1.21
 
 require (
 	github.com/golang-module/carbon v1.7.3
