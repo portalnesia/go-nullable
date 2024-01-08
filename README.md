@@ -28,12 +28,12 @@ type JsonType struct {
 func main() {
 	dataJson := []byte(`{"string":null}`)
 
-	var data JsonType
-	if err := json.Unmarshal(dataJson,&data); err != nil {
-		panic(err)
+    var data JsonType
+    if err := json.Unmarshal(dataJson,&data); err != nil {
+        panic(err)
     }
 	
-	fmt.Println(data.String)
+    fmt.Println(data.String)
 }
 ```
 
