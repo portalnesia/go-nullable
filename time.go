@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"database/sql"
 	"database/sql/driver"
+	"errors"
 	"github.com/golang-module/carbon"
 	"reflect"
 	"time"
@@ -78,10 +79,17 @@ func (d *Time) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	if err := json.Unmarshal(data, &d.Data); err != nil {
+	var timeString string
+
+	if err := json.Unmarshal(data, &timeString); err != nil {
 		return err
 	}
 
+	carbonTime := carbon.Parse(timeString)
+	if !carbonTime.IsValid() {
+		return errors.New("invalid date string")
+	}
+	d.Data = carbonTime.ToStdTime()
 	d.Valid = true
 	return nil
 }
