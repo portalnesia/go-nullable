@@ -5,18 +5,13 @@ package nullable
 
 import (
 	"bytes"
-	"context"
 	"database/sql/driver"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
-
-	"encoding/json"
 
 	"gorm.io/datatypes"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 )
 
@@ -119,15 +114,18 @@ func (Type[D]) GormDBDataType(db *gorm.DB, field *schema.Field) string {
 	return ""
 }
 
-func (js Type[T]) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
-	data, _ := js.MarshalJSON()
-
-	switch db.Dialector.Name() {
-	case "mysql":
-		if v, ok := db.Dialector.(*mysql.Dialector); ok && !strings.Contains(v.ServerVersion, "MariaDB") {
-			return gorm.Expr("CAST(? AS JSON)", string(data))
-		}
-	}
-
-	return gorm.Expr("?", string(data))
-}
+//func (js Type[T]) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
+//	if !js.Valid {
+//		return clause.Expr{SQL: "?", Vars: []any{"NULL"}, WithoutParentheses: true}
+//	}
+//
+//	data, _ := js.MarshalJSON()
+//	switch db.Dialector.Name() {
+//	case "mysql":
+//		if v, ok := db.Dialector.(*mysql.Dialector); ok && !strings.Contains(v.ServerVersion, "MariaDB") {
+//			return gorm.Expr("CAST(? AS JSON)", string(data))
+//		}
+//	}
+//
+//	return gorm.Expr("?", string(data))
+//}

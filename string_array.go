@@ -59,7 +59,6 @@ func (d StringArray) Value() (driver.Value, error) {
 }
 
 // MarshalJSON implements json.Marshaler interface.
-// Bug: Marshal undefined value
 func (d StringArray) MarshalJSON() ([]byte, error) {
 	if !d.Present || !d.Valid {
 		return []byte(`null`), nil
