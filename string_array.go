@@ -7,6 +7,7 @@ import (
 	pg "github.com/lib/pq"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+	"reflect"
 )
 
 type StringArray struct {
@@ -98,6 +99,17 @@ func (StringArray) GormDBDataType(db *gorm.DB, field *schema.Field) string {
 		return "text[]"
 	}
 	return ""
+}
+
+func (StringArray) FiberConverter(value string) reflect.Value {
+	var tmp pg.StringArray
+	s := StringArray{true, false, pg.StringArray{}}
+
+	if err := json.Unmarshal([]byte(value), &tmp); err != nil {
+		s = NewStringArray(tmp, true, true)
+	}
+
+	return reflect.ValueOf(s)
 }
 
 //func (d StringArray) GormValue(_ context.Context, db *gorm.DB) clause.Expr {

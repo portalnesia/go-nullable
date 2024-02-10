@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -112,6 +113,17 @@ func (Type[D]) GormDBDataType(db *gorm.DB, field *schema.Field) string {
 		return "JSONB"
 	}
 	return ""
+}
+
+func (Type[D]) FiberConverter(value string) reflect.Value {
+	var tmp D
+	s := Type[D]{true, false, tmp}
+
+	if err := json.Unmarshal([]byte(value), &tmp); err != nil {
+		s = NewType(tmp, true, true)
+	}
+
+	return reflect.ValueOf(s)
 }
 
 //func (js Type[T]) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
