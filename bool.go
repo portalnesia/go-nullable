@@ -22,7 +22,7 @@ type Bool struct {
 	Data    bool
 }
 
-func NewBool(present bool, valid bool, data bool) Bool {
+func NewBool(data bool, present bool, valid bool) Bool {
 	return Bool{Present: present, Valid: valid, Data: data}
 }
 func NewBoolPtr(data bool, present bool, valid bool) *Bool {
