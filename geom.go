@@ -31,6 +31,17 @@ func (g *GeomPoint) Scan(input interface{}) error {
 	return nil
 }
 
+func (g *GeomPoint) UnmarshalBSON(data []byte) error {
+	p := orb.Point{}
+	gs := ewkb.Scanner(&p)
+	err := gs.Scan(data)
+	if err != nil {
+		return err
+	}
+	g.Point = geojson.Point(p)
+	return nil
+}
+
 type GeomPolygon struct {
 	geojson.Polygon
 }
@@ -55,6 +66,17 @@ func (g *GeomPolygon) Scan(input interface{}) error {
 	return nil
 }
 
+func (g *GeomPolygon) UnmarshalBSON(data []byte) error {
+	p := orb.Polygon{}
+	gs := ewkb.Scanner(&p)
+	err := gs.Scan(data)
+	if err != nil {
+		return err
+	}
+	g.Polygon = geojson.Polygon(p)
+	return nil
+}
+
 type GeomMultiPolygon struct {
 	geojson.MultiPolygon
 }
@@ -69,6 +91,17 @@ func (g *GeomMultiPolygon) Scan(input interface{}) error {
 	default:
 		return fmt.Errorf("invalid geometry type: get %v", v)
 	}
+	p := orb.MultiPolygon{}
+	gs := ewkb.Scanner(&p)
+	err := gs.Scan(data)
+	if err != nil {
+		return err
+	}
+	g.MultiPolygon = geojson.MultiPolygon(p)
+	return nil
+}
+
+func (g *GeomMultiPolygon) UnmarshalBSON(data []byte) error {
 	p := orb.MultiPolygon{}
 	gs := ewkb.Scanner(&p)
 	err := gs.Scan(data)

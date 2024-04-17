@@ -11,7 +11,7 @@ import (
 )
 
 type stringJsonTest struct {
-	Value String `json:"value"`
+	Value String `json:"value,omitempty"`
 }
 
 func TestString_MarshalJSON(t *testing.T) {

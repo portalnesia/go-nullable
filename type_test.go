@@ -15,10 +15,11 @@ type nestedValue struct {
 }
 type testValue struct {
 	Data nestedValue `json:"data"`
+	//Undefined Type[nestedValue] `json:"undefined,omitempty"`
 }
 
 type typeJsonTest struct {
-	Value Type[testValue] `json:"value"`
+	Value Type[testValue] `json:"value,omitempty"`
 }
 
 func TestType_MarshalJSON(t *testing.T) {

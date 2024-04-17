@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.portalnesia.com/utils"
 	"reflect"
 
@@ -22,11 +23,21 @@ type Bool struct {
 	Data    bool
 }
 
-func NewBool(data bool, present bool, valid bool) Bool {
-	return Bool{Present: present, Valid: valid, Data: data}
+func NewBool(data bool, presentValid ...bool) Bool {
+	d := Bool{Present: true, Valid: true, Data: data}
+
+	if len(presentValid) > 0 {
+		d.Present = presentValid[0]
+		d.Valid = false
+		if len(presentValid) > 1 {
+			d.Valid = presentValid[1]
+		}
+	}
+	return d
 }
-func NewBoolPtr(data bool, present bool, valid bool) *Bool {
-	return &Bool{Present: present, Valid: valid, Data: data}
+func NewBoolPtr(data bool, presentValid ...bool) *Bool {
+	d := NewBool(data, presentValid...)
+	return &d
 }
 
 func (d Bool) Null() null.Bool {
@@ -80,6 +91,32 @@ func (b *Bool) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &b.Data); err != nil {
+		return nil
+	}
+
+	b.Valid = true
+	return nil
+}
+
+// MarshalBSON implements bson.Marshaler interface.
+func (i Bool) MarshalBSON() ([]byte, error) {
+	if !i.Present {
+		return []byte(`null`), nil
+	} else if !i.Valid {
+		return []byte("null"), nil
+	}
+	return bson.Marshal(i.Data)
+}
+
+// UnmarshalBSON implements bson.Marshaler interface.
+func (b *Bool) UnmarshalBSON(data []byte) error {
+	b.Present = true
+
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+
+	if err := bson.Unmarshal(data, &b.Data); err != nil {
 		return nil
 	}
 

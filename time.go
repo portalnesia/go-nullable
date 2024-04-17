@@ -9,6 +9,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"github.com/golang-module/carbon"
+	"go.mongodb.org/mongo-driver/bson"
 	"reflect"
 	"time"
 
@@ -20,13 +21,24 @@ type Time struct {
 	Present bool // Present is true if key is present in json
 	Valid   bool // Valid is true if value is not null and valid string
 	Data    time.Time
+	carbon  carbon.Carbon
 }
 
-func NewTime(data time.Time, present bool, value bool) Time {
-	return Time{Present: present, Valid: value, Data: data}
+func NewTime(data time.Time, presentValid ...bool) Time {
+	d := Time{Present: true, Valid: true, Data: data}
+	if len(presentValid) > 0 {
+		d.Present = presentValid[0]
+		d.Valid = false
+		if len(presentValid) > 1 {
+			d.Valid = presentValid[1]
+		}
+	}
+
+	return d
 }
-func NewTimePtr(data time.Time, present bool, value bool) *Time {
-	return &Time{Present: present, Valid: value, Data: data}
+func NewTimePtr(data time.Time, presentValid ...bool) *Time {
+	d := NewTime(data, presentValid...)
+	return &d
 }
 
 func (d Time) Null() null.Time {
@@ -40,6 +52,10 @@ func (d Time) Ptr() *time.Time {
 	return nil
 }
 
+func (d Time) Carbon() carbon.Carbon {
+	return d.carbon
+}
+
 // sql.Value interface
 func (d *Time) Scan(value interface{}) error {
 	d.Present = true
@@ -50,6 +66,7 @@ func (d *Time) Scan(value interface{}) error {
 	}
 	d.Valid = i.Valid
 	d.Data = i.Time
+	d.carbon = carbon.FromStdTime(i.Time)
 	return nil
 }
 
@@ -91,6 +108,41 @@ func (d *Time) UnmarshalJSON(data []byte) error {
 	}
 	d.Data = carbonTime.ToStdTime()
 	d.Valid = true
+	d.carbon = carbonTime
+	return nil
+}
+
+// MarshalBSON implements bson.Marshaler interface.
+func (d Time) MarshalBSON() ([]byte, error) {
+	if !d.Present {
+		return []byte(`null`), nil
+	} else if !d.Valid {
+		return []byte("null"), nil
+	}
+	return bson.Marshal(d.Data)
+}
+
+// UnmarshalBSON implements bson.Marshaler interface.
+func (d *Time) UnmarshalBSON(data []byte) error {
+	d.Present = true
+
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+
+	var timeString string
+
+	if err := bson.Unmarshal(data, &timeString); err != nil {
+		return err
+	}
+
+	carbonTime := carbon.Parse(timeString)
+	if !carbonTime.IsValid() {
+		return errors.New("invalid date string")
+	}
+	d.Data = carbonTime.ToStdTime()
+	d.Valid = true
+	d.carbon = carbonTime
 	return nil
 }
 

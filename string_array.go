@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	pg "github.com/lib/pq"
+	"go.mongodb.org/mongo-driver/bson"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 	"reflect"
@@ -16,11 +17,20 @@ type StringArray struct {
 	Data    pg.StringArray
 }
 
-func NewStringArray(data pg.StringArray, present bool, valid bool) StringArray {
-	return StringArray{Present: present, Valid: valid, Data: data}
+func NewStringArray(data pg.StringArray, presentValid ...bool) StringArray {
+	d := StringArray{Present: true, Valid: true, Data: data}
+	if len(presentValid) > 0 {
+		d.Present = presentValid[0]
+		d.Valid = false
+		if len(presentValid) > 1 {
+			d.Valid = presentValid[1]
+		}
+	}
+	return d
 }
-func NewStringArrayPtr(data pg.StringArray, present bool, valid bool) *StringArray {
-	return &StringArray{Present: present, Valid: valid, Data: data}
+func NewStringArrayPtr(data pg.StringArray, presentValid ...bool) *StringArray {
+	d := NewStringArray(data, presentValid...)
+	return &d
 }
 
 func (d StringArray) Ptr() *pg.StringArray {
@@ -61,7 +71,9 @@ func (d StringArray) Value() (driver.Value, error) {
 
 // MarshalJSON implements json.Marshaler interface.
 func (d StringArray) MarshalJSON() ([]byte, error) {
-	if !d.Present || !d.Valid {
+	if !d.Present {
+		return []byte(`null`), nil
+	} else if !d.Valid {
 		return []byte(`null`), nil
 	}
 	return json.Marshal(d.Data)
@@ -75,6 +87,32 @@ func (d *StringArray) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	if err := json.Unmarshal(data, &d.Data); err != nil {
+		return err
+	}
+	if len(d.Data) > 0 {
+		d.Valid = true
+	}
+	return nil
+}
+
+// MarshalBSON implements bson.Marshaler interface.
+func (d StringArray) MarshalBSON() ([]byte, error) {
+	if !d.Present {
+		return []byte(`null`), nil
+	} else if !d.Valid {
+		return []byte(`null`), nil
+	}
+	return bson.Marshal(d.Data)
+}
+
+// UnmarshalBSON implements bson.Marshaler interface.
+func (d *StringArray) UnmarshalBSON(data []byte) error {
+	d.Present = true
+
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	if err := bson.Unmarshal(data, &d.Data); err != nil {
 		return err
 	}
 	if len(d.Data) > 0 {

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
 	"reflect"
 
 	"gorm.io/datatypes"
@@ -22,11 +23,20 @@ type Type[D any] struct {
 	Data    D
 }
 
-func NewType[T any](data T, present bool, valid bool) Type[T] {
-	return Type[T]{Present: present, Valid: valid, Data: data}
+func NewType[T any](data T, presentValid ...bool) Type[T] {
+	d := Type[T]{Present: true, Valid: true, Data: data}
+	if len(presentValid) > 0 {
+		d.Present = presentValid[0]
+		d.Valid = false
+		if len(presentValid) > 1 {
+			d.Valid = presentValid[1]
+		}
+	}
+	return d
 }
-func NewTypePtr[T any](data T, present bool, valid bool) *Type[T] {
-	return &Type[T]{Present: present, Valid: valid, Data: data}
+func NewTypePtr[T any](data T, presentValid ...bool) *Type[T] {
+	d := NewType[T](data, presentValid...)
+	return &d
 }
 
 func (d Type[D]) Datatypes() *datatypes.JSONType[D] {
@@ -91,6 +101,30 @@ func (i *Type[D]) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	if err := json.Unmarshal(data, &i.Data); err != nil {
+		return err
+	}
+	i.Valid = true
+	return nil
+}
+
+// MarshalBSON implements bson.Marshaler interface.
+func (i Type[D]) MarshalBSON() ([]byte, error) {
+	if !i.Present {
+		return []byte(`null`), nil
+	} else if !i.Valid {
+		return []byte("null"), nil
+	}
+	return bson.Marshal(i.Data)
+}
+
+// UnmarshalBSON implements bson.Marshaler interface.
+func (i *Type[D]) UnmarshalBSON(data []byte) error {
+	i.Present = true
+
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	if err := bson.Unmarshal(data, &i.Data); err != nil {
 		return err
 	}
 	i.Valid = true
