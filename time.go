@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	"github.com/golang-module/carbon"
+	"github.com/golang-module/carbon/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"reflect"
 	"time"
@@ -66,7 +66,7 @@ func (d *Time) Scan(value interface{}) error {
 	}
 	d.Valid = i.Valid
 	d.Data = i.Time
-	d.carbon = carbon.FromStdTime(i.Time)
+	d.carbon = carbon.CreateFromStdTime(i.Time)
 	return nil
 }
 
