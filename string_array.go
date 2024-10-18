@@ -102,7 +102,8 @@ func (d StringArray) MarshalBSON() ([]byte, error) {
 	} else if !d.Valid {
 		return []byte(`null`), nil
 	}
-	return bson.Marshal(d.Data)
+	_, byt, err := bson.MarshalValue(d.Data)
+	return byt, err
 }
 
 // UnmarshalBSON implements bson.Marshaler interface.

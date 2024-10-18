@@ -106,7 +106,8 @@ func (i Float) MarshalBSON() ([]byte, error) {
 	} else if !i.Valid {
 		return []byte("null"), nil
 	}
-	return bson.Marshal(i.Data)
+	_, byt, err := bson.MarshalValue(i.Data)
+	return byt, err
 }
 
 // UnmarshalBSON implements bson.Marshaler interface.
