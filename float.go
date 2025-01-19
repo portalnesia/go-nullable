@@ -100,13 +100,15 @@ func (f *Float) UnmarshalJSON(data []byte) error {
 }
 
 // MarshalBSON implements bson.Marshaler interface.
-func (i Float) MarshalBSON() ([]byte, error) {
+func (i Float) MarshalBSON() (byt []byte, err error) {
+	var tmp *float64
+	_, byt, err = bson.MarshalValue(tmp)
 	if !i.Present {
-		return []byte(`null`), nil
+		return byt, err
 	} else if !i.Valid {
-		return []byte("null"), nil
+		return byt, err
 	}
-	_, byt, err := bson.MarshalValue(i.Data)
+	_, byt, err = bson.MarshalValue(i.Data)
 	return byt, err
 }
 

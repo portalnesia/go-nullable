@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	"github.com/golang-module/carbon/v2"
+	"github.com/dromara/carbon/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"reflect"
 	"time"
@@ -106,20 +106,22 @@ func (d *Time) UnmarshalJSON(data []byte) error {
 	if !carbonTime.IsValid() {
 		return errors.New("invalid date string")
 	}
-	d.Data = carbonTime.ToStdTime()
+	d.Data = carbonTime.StdTime()
 	d.Valid = true
 	d.carbon = carbonTime
 	return nil
 }
 
 // MarshalBSON implements bson.Marshaler interface.
-func (d Time) MarshalBSON() ([]byte, error) {
+func (d Time) MarshalBSON() (byt []byte, err error) {
+	var tmp *time.Time
+	_, byt, err = bson.MarshalValue(tmp)
 	if !d.Present {
-		return []byte(`null`), nil
+		return byt, err
 	} else if !d.Valid {
-		return []byte("null"), nil
+		return byt, err
 	}
-	_, byt, err := bson.MarshalValue(d.Data)
+	_, byt, err = bson.MarshalValue(d.Data)
 	return byt, err
 }
 
@@ -141,7 +143,7 @@ func (d *Time) UnmarshalBSON(data []byte) error {
 	if !carbonTime.IsValid() {
 		return errors.New("invalid date string")
 	}
-	d.Data = carbonTime.ToStdTime()
+	d.Data = carbonTime.StdTime()
 	d.Valid = true
 	d.carbon = carbonTime
 	return nil
@@ -150,7 +152,7 @@ func (d *Time) UnmarshalBSON(data []byte) error {
 func (Time) FiberConverter(value string) reflect.Value {
 	c := carbon.Parse(value)
 	if c.IsValid() {
-		a := NewTime(c.ToStdTime(), true, true)
+		a := NewTime(c.StdTime(), true, true)
 		return reflect.ValueOf(a)
 	} else {
 		a := NewTime(time.Now(), true, false)

@@ -96,13 +96,15 @@ func (d *StringArray) UnmarshalJSON(data []byte) error {
 }
 
 // MarshalBSON implements bson.Marshaler interface.
-func (d StringArray) MarshalBSON() ([]byte, error) {
+func (d StringArray) MarshalBSON() (byt []byte, err error) {
+	var tmp *string
+	_, byt, err = bson.MarshalValue(tmp)
 	if !d.Present {
-		return []byte(`null`), nil
+		return byt, err
 	} else if !d.Valid {
-		return []byte(`null`), nil
+		return byt, err
 	}
-	_, byt, err := bson.MarshalValue(d.Data)
+	_, byt, err = bson.MarshalValue(d.Data)
 	return byt, err
 }
 

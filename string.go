@@ -42,46 +42,46 @@ func NewStringPtr(data string, presentValid ...bool) *String {
 	return &d
 }
 
-func (d String) Null() null.String {
-	return null.NewString(d.Data, d.Present && d.Valid && d.Data != "")
+func (s String) Null() null.String {
+	return null.NewString(s.Data, s.Present && s.Valid && s.Data != "")
 }
 
-func (d String) Ptr() *string {
-	if d.Valid {
-		return &d.Data
+func (s String) Ptr() *string {
+	if s.Valid {
+		return &s.Data
 	}
 	return nil
 }
 
 // sql.Value interface
-func (d *String) Scan(value interface{}) error {
-	d.Present = true
+func (s *String) Scan(value interface{}) error {
+	s.Present = true
 
 	var i sql.NullString
 	if err := i.Scan(value); err != nil {
 		return err
 	}
-	d.Valid = i.Valid
-	d.Data = i.String
+	s.Valid = i.Valid
+	s.Data = i.String
 	return nil
 }
 
 // sql.Value interface
-func (d String) Value() (driver.Value, error) {
-	if !d.Valid {
+func (s String) Value() (driver.Value, error) {
+	if !s.Valid {
 		return nil, nil
 	}
-	return d.Data, nil
+	return s.Data, nil
 }
 
 // MarshalJSON implements json.Marshaler interface.
-func (i String) MarshalJSON() ([]byte, error) {
-	if !i.Present {
+func (s String) MarshalJSON() ([]byte, error) {
+	if !s.Present {
 		return []byte(`null`), nil
-	} else if !i.Valid {
+	} else if !s.Valid {
 		return []byte("null"), nil
 	}
-	return json.Marshal(i.Data)
+	return json.Marshal(s.Data)
 }
 
 // UnmarshalJSON implements json.Marshaler interface.
@@ -105,13 +105,15 @@ func (s *String) UnmarshalJSON(data []byte) error {
 }
 
 // MarshalBSON implements bson.Marshaler interface.
-func (i String) MarshalBSON() ([]byte, error) {
-	if !i.Present {
-		return []byte(`null`), nil
-	} else if !i.Valid {
-		return []byte("null"), nil
+func (s String) MarshalBSON() (byt []byte, err error) {
+	var tmp *string
+	_, byt, err = bson.MarshalValue(tmp)
+	if !s.Present {
+		return byt, err
+	} else if !s.Valid {
+		return byt, err
 	}
-	_, byt, err := bson.MarshalValue(i.Data)
+	_, byt, err = bson.MarshalValue(s.Data)
 	return byt, err
 }
 
