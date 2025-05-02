@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) Portalnesia - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Putu Aditya <aditya@portalnesia.com>
+ */
+
 package nullable
 
 import (
@@ -101,7 +108,7 @@ func (g *GeomMultiPolygon) Scan(input interface{}) error {
 	return nil
 }
 
-func (g *GeomMultiPolygon) UnmarshalBSON(data []byte) error {
+func (g *GeomMultiPolygon) Unmarshal(data []byte) error {
 	p := orb.MultiPolygon{}
 	gs := ewkb.Scanner(&p)
 	err := gs.Scan(data)

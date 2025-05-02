@@ -1,6 +1,10 @@
 /*
-Copyright © Portalnesia <support@portalnesia.com>
-*/
+ * Copyright (c) Portalnesia - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Putu Aditya <aditya@portalnesia.com>
+ */
+
 package nullable
 
 import (
@@ -24,7 +28,11 @@ type Type[D any] struct {
 }
 
 func NewType[T any](data T, presentValid ...bool) Type[T] {
-	d := Type[T]{Present: true, Valid: true, Data: data}
+	d := Type[T]{
+		Present: true,
+		Valid:   true,
+		Data:    data,
+	}
 	if len(presentValid) > 0 {
 		d.Present = presentValid[0]
 		d.Valid = false
@@ -153,7 +161,11 @@ func (Type[D]) GormDBDataType(db *gorm.DB, field *schema.Field) string {
 
 func (Type[D]) FiberConverter(value string) reflect.Value {
 	var tmp D
-	s := Type[D]{true, false, tmp}
+	s := Type[D]{
+		true,
+		false,
+		tmp,
+	}
 
 	if err := json.Unmarshal([]byte(value), &tmp); err != nil {
 		s = NewType(tmp, true, true)

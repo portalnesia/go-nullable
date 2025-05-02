@@ -1,6 +1,10 @@
 /*
-Copyright © Portalnesia <support@portalnesia.com>
-*/
+ * Copyright (c) Portalnesia - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Putu Aditya <aditya@portalnesia.com>
+ */
+
 package nullable
 
 import (
@@ -35,7 +39,11 @@ func TestStringArray_MarshalJSON(t *testing.T) {
 			name: "valid value",
 			data: typeStringArrayTest{
 				Value: StringArray{
-					Data:    pg.StringArray{"test", "string", "array"},
+					Data: pg.StringArray{
+						"test",
+						"string",
+						"array",
+					},
 					Present: true,
 					Valid:   true,
 				},
@@ -84,7 +92,11 @@ func TestStringArray_UnmarshalJSON(t *testing.T) {
 			expect: StringArray{
 				Present: true,
 				Valid:   true,
-				Data:    pg.StringArray{"test", "string", "array"},
+				Data: pg.StringArray{
+					"test",
+					"string",
+					"array",
+				},
 			},
 		},
 	}

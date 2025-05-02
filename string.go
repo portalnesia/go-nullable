@@ -1,6 +1,10 @@
 /*
-Copyright © Portalnesia <support@portalnesia.com>
-*/
+ * Copyright (c) Portalnesia - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Putu Aditya <aditya@portalnesia.com>
+ */
+
 package nullable
 
 import (
@@ -24,7 +28,11 @@ type String struct {
 }
 
 func NewString(data string, presentValid ...bool) String {
-	d := String{Present: true, Valid: true, Data: data}
+	d := String{
+		Present: true,
+		Valid:   true,
+		Data:    data,
+	}
 
 	if len(presentValid) > 0 {
 		d.Present = presentValid[0]

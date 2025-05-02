@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) Portalnesia - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Putu Aditya <aditya@portalnesia.com>
+ */
+
 package nullable
 
 import (
@@ -18,7 +25,11 @@ type StringArray struct {
 }
 
 func NewStringArray(data pg.StringArray, presentValid ...bool) StringArray {
-	d := StringArray{Present: true, Valid: true, Data: data}
+	d := StringArray{
+		Present: true,
+		Valid:   true,
+		Data:    data,
+	}
 	if len(presentValid) > 0 {
 		d.Present = presentValid[0]
 		d.Valid = false
@@ -144,7 +155,11 @@ func (StringArray) GormDBDataType(db *gorm.DB, field *schema.Field) string {
 
 func (StringArray) FiberConverter(value string) reflect.Value {
 	var tmp pg.StringArray
-	s := StringArray{true, false, pg.StringArray{}}
+	s := StringArray{
+		true,
+		false,
+		pg.StringArray{},
+	}
 
 	if err := json.Unmarshal([]byte(value), &tmp); err != nil {
 		s = NewStringArray(tmp, true, true)
