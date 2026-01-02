@@ -11,9 +11,10 @@ import (
 	"bytes"
 	"database/sql"
 	"database/sql/driver"
-	"go.mongodb.org/mongo-driver/bson"
 	"reflect"
 	"strconv"
+
+	"go.mongodb.org/mongo-driver/bson"
 
 	"encoding/json"
 
@@ -47,6 +48,18 @@ func NewFloat(data float64, presentValid ...bool) Float {
 func NewFloatPtr(data float64, presentValid ...bool) *Float {
 	d := NewFloat(data, presentValid...)
 	return &d
+}
+
+func (d Float) IsPresent() bool {
+	return d.Present
+}
+
+func (d Float) IsValid() bool {
+	return d.Valid
+}
+
+func (d Float) GetValue() interface{} {
+	return d.Data
 }
 
 func (d Float) Null() null.Float {

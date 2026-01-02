@@ -13,8 +13,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
 	"reflect"
+
+	"go.mongodb.org/mongo-driver/bson"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -45,6 +46,18 @@ func NewType[T any](data T, presentValid ...bool) Type[T] {
 func NewTypePtr[T any](data T, presentValid ...bool) *Type[T] {
 	d := NewType[T](data, presentValid...)
 	return &d
+}
+
+func (d Type[D]) IsPresent() bool {
+	return d.Present
+}
+
+func (d Type[D]) IsValid() bool {
+	return d.Valid
+}
+
+func (d Type[D]) GetValue() interface{} {
+	return d.Data
 }
 
 func (d Type[D]) Datatypes() *datatypes.JSONType[D] {

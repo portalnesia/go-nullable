@@ -11,11 +11,12 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"encoding/json"
+	"reflect"
+
 	pg "github.com/lib/pq"
 	"go.mongodb.org/mongo-driver/bson"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
-	"reflect"
 )
 
 type StringArray struct {
@@ -49,6 +50,18 @@ func (d StringArray) Ptr() *pg.StringArray {
 		return &d.Data
 	}
 	return nil
+}
+
+func (d StringArray) IsPresent() bool {
+	return d.Present
+}
+
+func (d StringArray) IsValid() bool {
+	return d.Valid
+}
+
+func (d StringArray) GetValue() interface{} {
+	return d.Data
 }
 
 func (d *StringArray) Scan(value interface{}) error {

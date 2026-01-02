@@ -11,8 +11,9 @@ import (
 	"bytes"
 	"database/sql"
 	"database/sql/driver"
-	"go.mongodb.org/mongo-driver/bson"
 	"reflect"
+
+	"go.mongodb.org/mongo-driver/bson"
 
 	"encoding/json"
 
@@ -48,6 +49,18 @@ func NewString(data string, presentValid ...bool) String {
 func NewStringPtr(data string, presentValid ...bool) *String {
 	d := NewString(data, presentValid...)
 	return &d
+}
+
+func (d String) IsPresent() bool {
+	return d.Present
+}
+
+func (d String) IsValid() bool {
+	return d.Valid
+}
+
+func (d String) GetValue() interface{} {
+	return d.Data
 }
 
 func (s String) Null() null.String {

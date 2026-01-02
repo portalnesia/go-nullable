@@ -12,9 +12,10 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
+	"reflect"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.portalnesia.com/utils"
-	"reflect"
 
 	"gopkg.in/guregu/null.v4"
 )
@@ -25,6 +26,18 @@ type Bool struct {
 	Present bool // Present is true if key is present in json
 	Valid   bool // Valid is true if value is not null and valid bool
 	Data    bool
+}
+
+func (d Bool) IsPresent() bool {
+	return d.Present
+}
+
+func (d Bool) IsValid() bool {
+	return d.Valid
+}
+
+func (d Bool) GetValue() interface{} {
+	return d.Data
 }
 
 func NewBool(data bool, presentValid ...bool) Bool {

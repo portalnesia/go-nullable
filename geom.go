@@ -9,6 +9,7 @@ package nullable
 
 import (
 	"fmt"
+
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/encoding/ewkb"
 	"github.com/paulmach/orb/geojson"

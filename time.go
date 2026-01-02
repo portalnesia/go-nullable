@@ -12,12 +12,14 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	"github.com/dromara/carbon/v2"
-	"go.mongodb.org/mongo-driver/bson"
 	"reflect"
 	"time"
 
+	"github.com/dromara/carbon/v2"
+	"go.mongodb.org/mongo-driver/bson"
+
 	"encoding/json"
+
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -47,6 +49,18 @@ func NewTime(data time.Time, presentValid ...bool) Time {
 func NewTimePtr(data time.Time, presentValid ...bool) *Time {
 	d := NewTime(data, presentValid...)
 	return &d
+}
+
+func (d Time) IsPresent() bool {
+	return d.Present
+}
+
+func (d Time) IsValid() bool {
+	return d.Valid
+}
+
+func (d Time) GetValue() interface{} {
+	return d.Data
 }
 
 func (d Time) Null() null.Time {
