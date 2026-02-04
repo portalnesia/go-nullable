@@ -95,12 +95,16 @@ func (d *Type[D]) Scan(value interface{}) error {
 	return json.Unmarshal(bytes, &d.Data)
 }
 
-// Value sql.Value interface
+// Value implements driver.Valuer interface
 func (d Type[D]) Value() (driver.Value, error) {
 	if !d.Valid {
 		return nil, nil
 	}
-	return json.Marshal(d.Data)
+	val, err := json.Marshal(d.Data)
+	if err != nil {
+		return nil, err
+	}
+	return string(val), nil
 }
 
 // MarshalJSON implements json.Marshaler interface.
