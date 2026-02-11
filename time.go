@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/vmihailenco/msgpack/v5"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"encoding/json"
@@ -23,8 +24,10 @@ import (
 	"gopkg.in/guregu/null.v4"
 )
 
+// Time represents go time that may be null or not
+// present in JSON at all.
 type Time struct {
-	Present bool // Present is true if key is present in json
+	Present bool // Present is true if key is present in JSON
 	Valid   bool // Valid is true if value is not null and valid string
 	Data    time.Time
 	carbon  *carbon.Carbon
@@ -78,7 +81,18 @@ func (d Time) Carbon() *carbon.Carbon {
 	return d.carbon
 }
 
-// sql.Value interface
+var (
+	_ driver.Valuer       = (*Time)(nil)
+	_ sql.Scanner         = (*Time)(nil)
+	_ json.Marshaler      = (*Time)(nil)
+	_ json.Unmarshaler    = (*Time)(nil)
+	_ bson.Marshaler      = (*Time)(nil)
+	_ bson.Unmarshaler    = (*Time)(nil)
+	_ msgpack.Marshaler   = (*Time)(nil)
+	_ msgpack.Unmarshaler = (*Time)(nil)
+)
+
+// Scan implements sql.Scanner interface
 func (d *Time) Scan(value interface{}) error {
 	d.Present = true
 
@@ -92,7 +106,7 @@ func (d *Time) Scan(value interface{}) error {
 	return nil
 }
 
-// sql.Value interface
+// Value implements driver.Valuer interface
 func (d Time) Value() (driver.Value, error) {
 	if !d.Valid {
 		return nil, nil
@@ -171,13 +185,44 @@ func (d *Time) UnmarshalBSON(data []byte) error {
 	return nil
 }
 
+// MarshalMsgpack implements msgpack.Marshaler interface.
+func (d Time) MarshalMsgpack() ([]byte, error) {
+	if !d.Present || !d.Valid {
+		return msgpack.Marshal(nil)
+	}
+	return msgpack.Marshal(d.Data)
+}
+
+// UnmarshalMsgpack implements msgpack.Unmarshaler interface.
+func (d *Time) UnmarshalMsgpack(data []byte) error {
+	d.Present = true // Jika fungsi ini dipanggil, berarti key-nya ada di payload
+
+	var val *string
+	if err := msgpack.Unmarshal(data, &val); err != nil {
+		return err
+	}
+
+	if val == nil {
+		d.Valid = false
+		return nil
+	}
+
+	carbonTime := carbon.Parse(*val)
+	if !carbonTime.IsValid() {
+		return errors.New("invalid date string")
+	}
+	d.Data = carbonTime.StdTime()
+	d.Valid = true
+	d.carbon = carbonTime
+	return nil
+}
+
 func (Time) FiberConverter(value string) reflect.Value {
 	c := carbon.Parse(value)
+	a := NewTime(c.StdTime(), true, false)
 	if c.IsValid() {
-		a := NewTime(c.StdTime(), true, true)
-		return reflect.ValueOf(a)
-	} else {
-		a := NewTime(time.Now(), true, false)
-		return reflect.ValueOf(a)
+		a.Valid = true
 	}
+
+	return reflect.ValueOf(a)
 }

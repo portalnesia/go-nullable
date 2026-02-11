@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/vmihailenco/msgpack/v5"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"encoding/json"
@@ -21,8 +22,10 @@ import (
 	"gopkg.in/guregu/null.v4"
 )
 
+// Int represents an int64 that may be null or not
+// present in JSON at all.
 type Int struct {
-	Present bool // Present is true if key is present in json
+	Present bool // Present is true if key is present in JSON
 	Valid   bool // Valid is true if value is not null and valid int64
 	Data    int64
 }
@@ -72,7 +75,18 @@ func (d Int) Ptr() *int64 {
 	return nil
 }
 
-// sql.Value interface
+var (
+	_ driver.Valuer       = (*Int)(nil)
+	_ sql.Scanner         = (*Int)(nil)
+	_ json.Marshaler      = (*Int)(nil)
+	_ json.Unmarshaler    = (*Int)(nil)
+	_ bson.Marshaler      = (*Int)(nil)
+	_ bson.Unmarshaler    = (*Int)(nil)
+	_ msgpack.Marshaler   = (*Int)(nil)
+	_ msgpack.Unmarshaler = (*Int)(nil)
+)
+
+// Scan implements sql.Scanner interface
 func (d *Int) Scan(value interface{}) error {
 	d.Present = true
 
@@ -85,7 +99,7 @@ func (d *Int) Scan(value interface{}) error {
 	return nil
 }
 
-// sql.Value interface
+// Value implements driver.Valuer interface
 func (d Int) Value() (driver.Value, error) {
 	if !d.Valid {
 		return nil, nil
@@ -94,58 +108,84 @@ func (d Int) Value() (driver.Value, error) {
 }
 
 // MarshalJSON implements json.Marshaler interface.
-// Bug: Marshal undefined value
-func (i Int) MarshalJSON() ([]byte, error) {
-	if !i.Present {
+func (d Int) MarshalJSON() ([]byte, error) {
+	if !d.Present {
 		return []byte(`null`), nil
-	} else if !i.Valid {
+	} else if !d.Valid {
 		return []byte("null"), nil
 	}
-	return json.Marshal(i.Data)
+	return json.Marshal(d.Data)
 }
 
 // UnmarshalJSON implements json.Marshaler interface.
-func (i *Int) UnmarshalJSON(data []byte) error {
-	i.Present = true
+func (d *Int) UnmarshalJSON(data []byte) error {
+	d.Present = true
 
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
 
-	if err := json.Unmarshal(data, &i.Data); err != nil {
+	if err := json.Unmarshal(data, &d.Data); err != nil {
 		return nil
 	}
 
-	i.Valid = true
+	d.Valid = true
 	return nil
 }
 
 // MarshalBSON implements bson.Marshaler interface.
-func (i Int) MarshalBSON() (byt []byte, err error) {
+func (d Int) MarshalBSON() (byt []byte, err error) {
 	var tmp *int
 	_, byt, err = bson.MarshalValue(tmp)
-	if !i.Present {
+	if !d.Present {
 		return byt, err
-	} else if !i.Valid {
+	} else if !d.Valid {
 		return byt, err
 	}
-	_, byt, err = bson.MarshalValue(i.Data)
+	_, byt, err = bson.MarshalValue(d.Data)
 	return byt, err
 }
 
 // UnmarshalBSON implements bson.Marshaler interface.
-func (i *Int) UnmarshalBSON(data []byte) error {
-	i.Present = true
+func (d *Int) UnmarshalBSON(data []byte) error {
+	d.Present = true
 
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
 
-	if err := bson.Unmarshal(data, &i.Data); err != nil {
+	if err := bson.Unmarshal(data, &d.Data); err != nil {
 		return nil
 	}
 
-	i.Valid = true
+	d.Valid = true
+	return nil
+}
+
+// MarshalMsgpack implements msgpack.Marshaler interface.
+func (d Int) MarshalMsgpack() ([]byte, error) {
+	if !d.Present || !d.Valid {
+		return msgpack.Marshal(nil)
+	}
+	return msgpack.Marshal(d.Data)
+}
+
+// UnmarshalMsgpack implements msgpack.Unmarshaler interface.
+func (d *Int) UnmarshalMsgpack(data []byte) error {
+	d.Present = true // Jika fungsi ini dipanggil, berarti key-nya ada di payload
+
+	var val *int64
+	if err := msgpack.Unmarshal(data, &val); err != nil {
+		return err
+	}
+
+	if val == nil {
+		d.Valid = false
+		return nil
+	}
+
+	d.Valid = true
+	d.Data = *val
 	return nil
 }
 

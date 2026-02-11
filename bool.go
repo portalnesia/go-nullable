@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"reflect"
 
+	"github.com/vmihailenco/msgpack/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.portalnesia.com/utils"
 
@@ -21,9 +22,9 @@ import (
 )
 
 // Bool represents a bool that may be null or not
-// present in json at all.
+// present in JSON at all.
 type Bool struct {
-	Present bool // Present is true if key is present in json
+	Present bool // Present is true if key is present in JSON
 	Valid   bool // Valid is true if value is not null and valid bool
 	Data    bool
 }
@@ -49,7 +50,6 @@ func NewBool(data bool, presentValid ...bool) Bool {
 
 	if len(presentValid) > 0 {
 		d.Present = presentValid[0]
-		d.Valid = false
 		if len(presentValid) > 1 {
 			d.Valid = presentValid[1]
 		}
@@ -72,7 +72,18 @@ func (d Bool) Ptr() *bool {
 	return nil
 }
 
-// sql.Value interface
+var (
+	_ driver.Valuer       = (*Bool)(nil)
+	_ sql.Scanner         = (*Bool)(nil)
+	_ json.Marshaler      = (*Bool)(nil)
+	_ json.Unmarshaler    = (*Bool)(nil)
+	_ bson.Marshaler      = (*Bool)(nil)
+	_ bson.Unmarshaler    = (*Bool)(nil)
+	_ msgpack.Marshaler   = (*Bool)(nil)
+	_ msgpack.Unmarshaler = (*Bool)(nil)
+)
+
+// Scan implements sql.Scanner interface
 func (d *Bool) Scan(value interface{}) error {
 	d.Present = true
 
@@ -85,7 +96,7 @@ func (d *Bool) Scan(value interface{}) error {
 	return nil
 }
 
-// sql.Value interface
+// Value implements driver.Valuer interface
 func (d Bool) Value() (driver.Value, error) {
 	if !d.Valid {
 		return nil, nil
@@ -94,57 +105,84 @@ func (d Bool) Value() (driver.Value, error) {
 }
 
 // MarshalJSON implements json.Marshaler interface.
-func (i Bool) MarshalJSON() ([]byte, error) {
-	if !i.Present {
+func (d Bool) MarshalJSON() ([]byte, error) {
+	if !d.Present {
 		return []byte(`null`), nil
-	} else if !i.Valid {
+	} else if !d.Valid {
 		return []byte("null"), nil
 	}
-	return json.Marshal(i.Data)
+	return json.Marshal(d.Data)
 }
 
 // UnmarshalJSON implements json.Marshaler interface.
-func (b *Bool) UnmarshalJSON(data []byte) error {
-	b.Present = true
+func (d *Bool) UnmarshalJSON(data []byte) error {
+	d.Present = true
 
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
 
-	if err := json.Unmarshal(data, &b.Data); err != nil {
+	if err := json.Unmarshal(data, &d.Data); err != nil {
 		return nil
 	}
 
-	b.Valid = true
+	d.Valid = true
 	return nil
 }
 
 // MarshalBSON implements bson.Marshaler interface.
-func (i Bool) MarshalBSON() (byt []byte, err error) {
+func (d Bool) MarshalBSON() (byt []byte, err error) {
 	var tmp *bool
 	_, byt, err = bson.MarshalValue(tmp)
-	if !i.Present {
+	if !d.Present {
 		return byt, err
-	} else if !i.Valid {
+	} else if !d.Valid {
 		return byt, err
 	}
-	_, byt, err = bson.MarshalValue(i.Data)
+	_, byt, err = bson.MarshalValue(d.Data)
 	return byt, err
 }
 
 // UnmarshalBSON implements bson.Marshaler interface.
-func (b *Bool) UnmarshalBSON(data []byte) error {
-	b.Present = true
+func (d *Bool) UnmarshalBSON(data []byte) error {
+	d.Present = true
 
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
 
-	if err := bson.Unmarshal(data, &b.Data); err != nil {
+	if err := bson.Unmarshal(data, &d.Data); err != nil {
 		return nil
 	}
 
-	b.Valid = true
+	d.Valid = true
+	return nil
+}
+
+// MarshalMsgpack implements msgpack.Marshaler interface.
+func (d Bool) MarshalMsgpack() ([]byte, error) {
+	if !d.Present || !d.Valid {
+		return msgpack.Marshal(nil)
+	}
+	return msgpack.Marshal(d.Data)
+}
+
+// UnmarshalMsgpack implements msgpack.Unmarshaler interface.
+func (d *Bool) UnmarshalMsgpack(data []byte) error {
+	d.Present = true // Jika fungsi ini dipanggil, berarti key-nya ada di payload
+
+	var val *bool
+	if err := msgpack.Unmarshal(data, &val); err != nil {
+		return err
+	}
+
+	if val == nil {
+		d.Valid = false
+		return nil
+	}
+
+	d.Valid = true
+	d.Data = *val
 	return nil
 }
 

@@ -9,18 +9,22 @@ package nullable
 
 import (
 	"bytes"
+	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
 	"reflect"
 
 	pg "github.com/lib/pq"
+	"github.com/vmihailenco/msgpack/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
 
+// StringArray represents an array of string that may be null or not
+// present in JSON at all.
 type StringArray struct {
-	Present bool // Present is true if key is present in json
+	Present bool // Present is true if key is present in JSON
 	Valid   bool // Valid is true if value is not null and valid string
 	Data    pg.StringArray
 }
@@ -64,6 +68,18 @@ func (d StringArray) GetValue() interface{} {
 	return d.Data
 }
 
+var (
+	_ driver.Valuer       = (*StringArray)(nil)
+	_ sql.Scanner         = (*StringArray)(nil)
+	_ json.Marshaler      = (*StringArray)(nil)
+	_ json.Unmarshaler    = (*StringArray)(nil)
+	_ bson.Marshaler      = (*StringArray)(nil)
+	_ bson.Unmarshaler    = (*StringArray)(nil)
+	_ msgpack.Marshaler   = (*StringArray)(nil)
+	_ msgpack.Unmarshaler = (*StringArray)(nil)
+)
+
+// Scan implements sql.Scanner interface
 func (d *StringArray) Scan(value interface{}) error {
 	d.Present = true
 	if value == nil {
@@ -77,14 +93,12 @@ func (d *StringArray) Scan(value interface{}) error {
 		return err
 	}
 
-	if temp != nil {
-		d.Valid = true
-	}
+	d.Valid = true
 	d.Data = temp
 	return nil
 }
 
-// Value sql.Value interface
+// Value implements driver.Valuer interface
 func (d StringArray) Value() (driver.Value, error) {
 	if !d.Valid || len(d.Data) == 0 {
 		return nil, nil
@@ -154,7 +168,7 @@ func (StringArray) GormDataType() string {
 }
 
 // GormDBDataType gorm db data type
-func (StringArray) GormDBDataType(db *gorm.DB, field *schema.Field) string {
+func (StringArray) GormDBDataType(db *gorm.DB, _ *schema.Field) string {
 	switch db.Dialector.Name() {
 	case "sqlite":
 		return "JSON"
@@ -164,6 +178,33 @@ func (StringArray) GormDBDataType(db *gorm.DB, field *schema.Field) string {
 		return "text[]"
 	}
 	return ""
+}
+
+// MarshalMsgpack implements msgpack.Marshaler interface.
+func (d StringArray) MarshalMsgpack() ([]byte, error) {
+	if !d.Present || !d.Valid {
+		return msgpack.Marshal(nil)
+	}
+	return msgpack.Marshal(d.Data)
+}
+
+// UnmarshalMsgpack implements msgpack.Unmarshaler interface.
+func (d *StringArray) UnmarshalMsgpack(data []byte) error {
+	d.Present = true // Jika fungsi ini dipanggil, berarti key-nya ada di payload
+
+	var val *[]string
+	if err := msgpack.Unmarshal(data, &val); err != nil {
+		return err
+	}
+
+	if val == nil {
+		d.Valid = false
+		return nil
+	}
+
+	d.Valid = len(*val) > 0
+	d.Data = *val
+	return nil
 }
 
 func (StringArray) FiberConverter(value string) reflect.Value {

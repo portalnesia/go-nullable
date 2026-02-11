@@ -13,6 +13,7 @@ import (
 	"database/sql/driver"
 	"reflect"
 
+	"github.com/vmihailenco/msgpack/v5"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"encoding/json"
@@ -21,9 +22,9 @@ import (
 )
 
 // String represents a string that may be null or not
-// present in json at all.
+// present in JSON at all.
 type String struct {
-	Present bool // Present is true if key is present in json
+	Present bool // Present is true if key is present in JSON
 	Valid   bool // Valid is true if value is not null and valid string
 	Data    string
 }
@@ -63,51 +64,62 @@ func (d String) GetValue() interface{} {
 	return d.Data
 }
 
-func (s String) Null() null.String {
-	return null.NewString(s.Data, s.Present && s.Valid && s.Data != "")
+func (d String) Null() null.String {
+	return null.NewString(d.Data, d.Present && d.Valid && d.Data != "")
 }
 
-func (s String) Ptr() *string {
-	if s.Valid {
-		return &s.Data
+func (d String) Ptr() *string {
+	if d.Valid {
+		return &d.Data
 	}
 	return nil
 }
 
-// sql.Value interface
-func (s *String) Scan(value interface{}) error {
-	s.Present = true
+var (
+	_ driver.Valuer       = (*String)(nil)
+	_ sql.Scanner         = (*String)(nil)
+	_ json.Marshaler      = (*String)(nil)
+	_ json.Unmarshaler    = (*String)(nil)
+	_ bson.Marshaler      = (*String)(nil)
+	_ bson.Unmarshaler    = (*String)(nil)
+	_ msgpack.Marshaler   = (*String)(nil)
+	_ msgpack.Unmarshaler = (*String)(nil)
+)
+
+// Scan implements sql.Scanner interface
+func (d *String) Scan(value interface{}) error {
+	d.Present = true
 
 	var i sql.NullString
 	if err := i.Scan(value); err != nil {
 		return err
 	}
-	s.Valid = i.Valid
-	s.Data = i.String
+	d.Valid = i.Valid
+	d.Data = i.String
 	return nil
 }
 
-// sql.Value interface
-func (s String) Value() (driver.Value, error) {
-	if !s.Valid {
+// Value implements driver.Valuer interface
+func (d String) Value() (driver.Value, error) {
+	if !d.Valid {
 		return nil, nil
 	}
-	return s.Data, nil
+	return d.Data, nil
 }
 
 // MarshalJSON implements json.Marshaler interface.
-func (s String) MarshalJSON() ([]byte, error) {
-	if !s.Present {
+func (d String) MarshalJSON() ([]byte, error) {
+	if !d.Present {
 		return []byte(`null`), nil
-	} else if !s.Valid {
+	} else if !d.Valid {
 		return []byte("null"), nil
 	}
-	return json.Marshal(s.Data)
+	return json.Marshal(d.Data)
 }
 
 // UnmarshalJSON implements json.Marshaler interface.
-func (s *String) UnmarshalJSON(data []byte) error {
-	s.Present = true
+func (d *String) UnmarshalJSON(data []byte) error {
+	d.Present = true
 
 	if bytes.Equal(data, []byte("null")) {
 		return nil
@@ -117,30 +129,30 @@ func (s *String) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	if err := json.Unmarshal(data, &s.Data); err != nil {
+	if err := json.Unmarshal(data, &d.Data); err != nil {
 		return nil
 	}
 
-	s.Valid = true
+	d.Valid = true
 	return nil
 }
 
 // MarshalBSON implements bson.Marshaler interface.
-func (s String) MarshalBSON() (byt []byte, err error) {
+func (d String) MarshalBSON() (byt []byte, err error) {
 	var tmp *string
 	_, byt, err = bson.MarshalValue(tmp)
-	if !s.Present {
+	if !d.Present {
 		return byt, err
-	} else if !s.Valid {
+	} else if !d.Valid {
 		return byt, err
 	}
-	_, byt, err = bson.MarshalValue(s.Data)
+	_, byt, err = bson.MarshalValue(d.Data)
 	return byt, err
 }
 
 // UnmarshalBSON implements bson.Marshaler interface.
-func (s *String) UnmarshalBSON(data []byte) error {
-	s.Present = true
+func (d *String) UnmarshalBSON(data []byte) error {
+	d.Present = true
 
 	if bytes.Equal(data, []byte("null")) {
 		return nil
@@ -150,11 +162,38 @@ func (s *String) UnmarshalBSON(data []byte) error {
 		return nil
 	}
 
-	if err := bson.Unmarshal(data, &s.Data); err != nil {
+	if err := bson.Unmarshal(data, &d.Data); err != nil {
 		return nil
 	}
 
-	s.Valid = true
+	d.Valid = true
+	return nil
+}
+
+// MarshalMsgpack implements msgpack.Marshaler interface.
+func (d String) MarshalMsgpack() ([]byte, error) {
+	if !d.Present || !d.Valid {
+		return msgpack.Marshal(nil)
+	}
+	return msgpack.Marshal(d.Data)
+}
+
+// UnmarshalMsgpack implements msgpack.Unmarshaler interface.
+func (d *String) UnmarshalMsgpack(data []byte) error {
+	d.Present = true // Jika fungsi ini dipanggil, berarti key-nya ada di payload
+
+	var val *string
+	if err := msgpack.Unmarshal(data, &val); err != nil {
+		return err
+	}
+
+	if val == nil {
+		d.Valid = false
+		return nil
+	}
+
+	d.Valid = len(*val) > 0
+	d.Data = *val
 	return nil
 }
 
