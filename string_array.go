@@ -16,6 +16,7 @@ import (
 
 	pg "github.com/lib/pq"
 	"github.com/uptrace/bun/dialect"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/schema"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.mongodb.org/mongo-driver/bson"
@@ -24,6 +25,14 @@ import (
 
 // StringArray represents an array of string that may be null or not
 // present in JSON at all.
+//
+// When using with bun ORM, do NOT use `type:text[]` or `array` tag on the field,
+// as pgdialect will override the appender with arrayAppender which does not support struct types.
+// Instead, use nullzero tag and let the driver.Valuer handle the conversion:
+//
+//	type Model struct {
+//	    Tags StringArray `bun:"tags,nullzero"`
+//	}
 type StringArray struct {
 	Present bool // Present is true if key is present in JSON
 	Valid   bool // Valid is true if value is not null and valid string
@@ -114,22 +123,7 @@ func (d StringArray) AppendQuery(gen schema.QueryGen, b []byte) ([]byte, error) 
 	if !d.Valid {
 		return dialect.AppendNull(b), nil
 	}
-
-	val, err := d.Data.Value()
-	if err != nil {
-		return nil, err
-	}
-
-	if val == nil {
-		return dialect.AppendNull(b), nil
-	}
-
-	str, ok := val.(string)
-	if !ok {
-		return dialect.AppendNull(b), nil
-	}
-
-	return gen.AppendValue(b, reflect.ValueOf(str)), nil
+	return pgdialect.Array([]string(d.Data)).AppendQuery(gen, b)
 }
 
 // MarshalJSON implements json.Marshaler interface.
