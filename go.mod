@@ -1,11 +1,13 @@
 module go.portalnesia.com/nullable
 
-go 1.21
+go 1.24.0
 
 require (
 	github.com/dromara/carbon/v2 v2.6.4
 	github.com/lib/pq v1.10.9
 	github.com/paulmach/orb v0.10.0
+	github.com/uptrace/bun v1.2.17
+	github.com/vmihailenco/msgpack/v5 v5.4.1
 	go.mongodb.org/mongo-driver v1.11.4
 	go.portalnesia.com/utils v1.0.6
 	gopkg.in/guregu/null.v4 v4.0.0
@@ -24,9 +26,11 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/matoous/go-nanoid/v2 v2.0.0 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.19 // indirect
-	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
+	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
+	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
+	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	gorm.io/driver/mysql v1.5.2 // indirect
 )

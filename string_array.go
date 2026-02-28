@@ -15,10 +15,11 @@ import (
 	"reflect"
 
 	pg "github.com/lib/pq"
+	"github.com/uptrace/bun/dialect"
+	"github.com/uptrace/bun/schema"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
 )
 
 // StringArray represents an array of string that may be null or not
@@ -69,14 +70,15 @@ func (d StringArray) GetValue() interface{} {
 }
 
 var (
-	_ driver.Valuer       = (*StringArray)(nil)
-	_ sql.Scanner         = (*StringArray)(nil)
-	_ json.Marshaler      = (*StringArray)(nil)
-	_ json.Unmarshaler    = (*StringArray)(nil)
-	_ bson.Marshaler      = (*StringArray)(nil)
-	_ bson.Unmarshaler    = (*StringArray)(nil)
-	_ msgpack.Marshaler   = (*StringArray)(nil)
-	_ msgpack.Unmarshaler = (*StringArray)(nil)
+	_ driver.Valuer        = (*StringArray)(nil)
+	_ sql.Scanner          = (*StringArray)(nil)
+	_ json.Marshaler       = (*StringArray)(nil)
+	_ json.Unmarshaler     = (*StringArray)(nil)
+	_ bson.Marshaler       = (*StringArray)(nil)
+	_ bson.Unmarshaler     = (*StringArray)(nil)
+	_ msgpack.Marshaler    = (*StringArray)(nil)
+	_ msgpack.Unmarshaler  = (*StringArray)(nil)
+	_ schema.QueryAppender = (*StringArray)(nil)
 )
 
 // Scan implements sql.Scanner interface
@@ -105,6 +107,15 @@ func (d StringArray) Value() (driver.Value, error) {
 	}
 
 	return d.Data.Value()
+}
+
+// AppendQuery implements bun/dialect.AppendQuery interface for PostgreSQL array support.
+func (d StringArray) AppendQuery(gen schema.QueryGen, b []byte) ([]byte, error) {
+	if !d.Valid {
+		return dialect.AppendNull(b), nil
+	}
+	v := reflect.ValueOf(d.Data)
+	return gen.AppendValue(b, v), nil
 }
 
 // MarshalJSON implements json.Marshaler interface.
