@@ -114,8 +114,22 @@ func (d StringArray) AppendQuery(gen schema.QueryGen, b []byte) ([]byte, error) 
 	if !d.Valid {
 		return dialect.AppendNull(b), nil
 	}
-	v := reflect.ValueOf(d.Data)
-	return gen.AppendValue(b, v), nil
+
+	val, err := d.Data.Value()
+	if err != nil {
+		return nil, err
+	}
+
+	if val == nil {
+		return dialect.AppendNull(b), nil
+	}
+
+	str, ok := val.(string)
+	if !ok {
+		return dialect.AppendNull(b), nil
+	}
+
+	return gen.AppendValue(b, reflect.ValueOf(str)), nil
 }
 
 // MarshalJSON implements json.Marshaler interface.
