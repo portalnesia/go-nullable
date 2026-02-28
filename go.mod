@@ -1,6 +1,6 @@
 module go.portalnesia.com/nullable
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/dromara/carbon/v2 v2.6.4
@@ -29,8 +29,8 @@ require (
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
+	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
 	gorm.io/driver/mysql v1.5.2 // indirect
 )
