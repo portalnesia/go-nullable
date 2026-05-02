@@ -15,7 +15,7 @@ import (
 	"strconv"
 
 	"github.com/vmihailenco/msgpack/v5"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 
 	"encoding/json"
 

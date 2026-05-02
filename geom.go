@@ -15,7 +15,7 @@ import (
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/encoding/ewkb"
 	"github.com/paulmach/orb/geojson"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type GeomPoint struct {

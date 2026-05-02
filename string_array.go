@@ -19,8 +19,7 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/schema"
 	"github.com/vmihailenco/msgpack/v5"
-	"go.mongodb.org/mongo-driver/bson"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // StringArray represents an array of string that may be null or not
@@ -179,24 +178,6 @@ func (d *StringArray) UnmarshalBSON(data []byte) error {
 		d.Valid = true
 	}
 	return nil
-}
-
-// GormDataType gorm common data type
-func (StringArray) GormDataType() string {
-	return "json"
-}
-
-// GormDBDataType gorm db data type
-func (StringArray) GormDBDataType(db *gorm.DB, _ *schema.Field) string {
-	switch db.Dialector.Name() {
-	case "sqlite":
-		return "JSON"
-	case "mysql":
-		return "JSON"
-	case "postgres":
-		return "text[]"
-	}
-	return ""
 }
 
 // MarshalMsgpack implements msgpack.Marshaler interface.

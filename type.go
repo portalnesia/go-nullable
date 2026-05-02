@@ -17,11 +17,7 @@ import (
 	"reflect"
 
 	"github.com/vmihailenco/msgpack/v5"
-	"go.mongodb.org/mongo-driver/bson"
-
-	"gorm.io/datatypes"
-	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // Type represents a custom struct that may be null or not
@@ -62,14 +58,6 @@ func (d Type[D]) IsValid() bool {
 
 func (d Type[D]) GetValue() interface{} {
 	return d.Data
-}
-
-func (d Type[D]) Datatypes() *datatypes.JSONType[D] {
-	if !d.Present || !d.Valid {
-		return nil
-	}
-	dt := datatypes.NewJSONType(d.Data)
-	return &dt
 }
 
 func (d Type[D]) Ptr() *D {
@@ -172,24 +160,6 @@ func (d *Type[D]) UnmarshalBSON(data []byte) error {
 	}
 	d.Valid = true
 	return nil
-}
-
-// GormDataType gorm common data type
-func (Type[D]) GormDataType() string {
-	return "json"
-}
-
-// GormDBDataType gorm db data type
-func (Type[D]) GormDBDataType(db *gorm.DB, _ *schema.Field) string {
-	switch db.Dialector.Name() {
-	case "sqlite":
-		return "JSON"
-	case "mysql":
-		return "JSON"
-	case "postgres":
-		return "JSONB"
-	}
-	return ""
 }
 
 // MarshalMsgpack implements msgpack.Marshaler interface.
